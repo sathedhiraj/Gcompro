@@ -61,7 +61,10 @@ export async function PUT(
     const body = await request.json();
     const { status, paymentStatus } = body;
 
-    const existing = await db.order.findUnique({ where: { id } });
+    const existing = await db.order.findUnique({
+      where: { id },
+      include: { items: true },
+    });
     if (!existing) {
       return NextResponse.json(
         { error: 'Order not found' },
@@ -99,6 +102,16 @@ export async function PUT(
         },
       },
     });
+
+    // If order is being cancelled, restore product stock
+    if (status === 'CANCELLED' && existing.status !== 'CANCELLED') {
+      for (const item of existing.items) {
+        await db.product.update({
+          where: { id: item.productId },
+          data: { stock: { increment: item.quantity } },
+        });
+      }
+    }
 
     return NextResponse.json({ order });
   } catch (error) {

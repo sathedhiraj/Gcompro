@@ -23,6 +23,7 @@ import {
   Shield,
   RotateCcw,
   Package,
+  Loader2,
 } from 'lucide-react';
 import BackButton from '@/components/layout/BackButton';
 import type { Product, Review } from '@/types';
@@ -88,6 +89,9 @@ export default function ProductDetailPage() {
   const [loading, setLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
+  const [addingToCart, setAddingToCart] = useState(false);
+  const [buyingNow, setBuyingNow] = useState(false);
+  const [togglingWishlist, setTogglingWishlist] = useState(false);
 
   const inWishlist = product ? isInWishlist(product.id) : false;
 
@@ -170,8 +174,15 @@ export default function ProductDetailPage() {
       navigate('login');
       return;
     }
-    await addItem(user.id, product.id, quantity);
-    toast({ title: 'Added to cart', description: `${product.name} has been added to your cart` });
+    setAddingToCart(true);
+    try {
+      await addItem(user.id, product.id, quantity);
+      toast({ title: 'Added to cart', description: `${product.name} has been added to your cart` });
+    } catch {
+      toast({ title: 'Error', description: 'Failed to add item to cart. Please try again.', variant: 'destructive' });
+    } finally {
+      setAddingToCart(false);
+    }
   };
 
   const handleBuyNow = async () => {
@@ -179,8 +190,14 @@ export default function ProductDetailPage() {
       navigate('login');
       return;
     }
-    await addItem(user.id, product.id, quantity);
-    navigate('checkout');
+    setBuyingNow(true);
+    try {
+      await addItem(user.id, product.id, quantity);
+      navigate('checkout');
+    } catch {
+      toast({ title: 'Error', description: 'Failed to process. Please try again.', variant: 'destructive' });
+      setBuyingNow(false);
+    }
   };
 
   const handleWishlist = async () => {
@@ -188,13 +205,20 @@ export default function ProductDetailPage() {
       navigate('login');
       return;
     }
-    if (inWishlist) {
-      const item = useWishlistStore.getState().items.find((i) => i.productId === product.id);
-      if (item) await removeFromWishlist(item.id);
-      toast({ title: 'Removed from wishlist' });
-    } else {
-      await addToWishlist(user.id, product.id);
-      toast({ title: 'Added to wishlist' });
+    setTogglingWishlist(true);
+    try {
+      if (inWishlist) {
+        const item = useWishlistStore.getState().items.find((i) => i.productId === product.id);
+        if (item) await removeFromWishlist(item.id);
+        toast({ title: 'Removed from wishlist' });
+      } else {
+        await addToWishlist(user.id, product.id);
+        toast({ title: 'Added to wishlist' });
+      }
+    } catch {
+      toast({ title: 'Error', description: 'Failed to update wishlist. Please try again.', variant: 'destructive' });
+    } finally {
+      setTogglingWishlist(false);
     }
   };
 
@@ -343,24 +367,37 @@ export default function ProductDetailPage() {
             <div className="flex gap-3">
               <Button
                 onClick={handleAddToCart}
-                disabled={product.stock === 0}
+                disabled={product.stock === 0 || addingToCart}
                 className="flex-1 bg-[#ff9f00] py-6 text-base font-semibold text-white hover:bg-[#e89100]"
               >
-                <ShoppingCart className="mr-2 h-5 w-5" /> Add to Cart
+                {addingToCart ? (
+                  <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Adding...</>
+                ) : (
+                  <><ShoppingCart className="mr-2 h-5 w-5" /> Add to Cart</>
+                )}
               </Button>
               <Button
                 onClick={handleBuyNow}
-                disabled={product.stock === 0}
+                disabled={product.stock === 0 || buyingNow}
                 className="flex-1 bg-[#fb641b] py-6 text-base font-semibold text-white hover:bg-[#e55a18]"
               >
-                Buy Now
+                {buyingNow ? (
+                  <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Processing...</>
+                ) : (
+                  'Buy Now'
+                )}
               </Button>
               <Button
                 variant="outline"
                 onClick={handleWishlist}
+                disabled={togglingWishlist}
                 className="px-4"
               >
-                <Heart className={`h-5 w-5 ${inWishlist ? 'fill-red-500 text-red-500' : ''}`} />
+                {togglingWishlist ? (
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                ) : (
+                  <Heart className={`h-5 w-5 ${inWishlist ? 'fill-red-500 text-red-500' : ''}`} />
+                )}
               </Button>
             </div>
 

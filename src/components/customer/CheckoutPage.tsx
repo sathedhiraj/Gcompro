@@ -102,11 +102,13 @@ export default function CheckoutPage() {
     try {
       const orderData: Record<string, unknown> = {
         userId: user.id,
-        shippingStreet: street,
-        shippingCity: city,
-        shippingState: state,
-        shippingZipCode: zipCode,
-        shippingCountry: country,
+        shippingAddress: {
+          street,
+          city,
+          state,
+          zipCode,
+          country,
+        },
         paymentMethod,
       };
 

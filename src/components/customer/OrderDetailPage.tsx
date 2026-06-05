@@ -2,13 +2,15 @@
 
 import { useState, useEffect } from 'react';
 import { useUIStore } from '@/store/ui-store';
+import { useAuthStore } from '@/store/auth-store';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ArrowLeft, MapPin, CreditCard, Package } from 'lucide-react';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { ArrowLeft, MapPin, CreditCard, Package, XCircle, Loader2 } from 'lucide-react';
 import BackButton from '@/components/layout/BackButton';
 import type { Order } from '@/types';
 
@@ -48,10 +50,12 @@ const paymentMethodLabels: Record<string, string> = {
 
 export default function OrderDetailPage() {
   const { selectedOrderId, navigate } = useUIStore();
+  const { user } = useAuthStore();
   const { toast } = useToast();
 
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
+  const [cancelling, setCancelling] = useState(false);
 
   useEffect(() => {
     if (!selectedOrderId) return;
@@ -70,6 +74,34 @@ export default function OrderDetailPage() {
     loadOrder();
     return () => { cancelled = true; };
   }, [selectedOrderId, toast]);
+
+  const handleCancelOrder = async () => {
+    if (!order || !user) return;
+    setCancelling(true);
+    try {
+      const res = await fetch(`/api/orders/${order.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          status: 'CANCELLED',
+          paymentStatus: order.paymentStatus === 'COMPLETED' ? 'REFUNDED' : order.paymentStatus,
+        }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setOrder(data.order || { ...order, status: 'CANCELLED', paymentStatus: order.paymentStatus === 'COMPLETED' ? 'REFUNDED' : order.paymentStatus });
+        toast({ title: 'Order Cancelled', description: `Order #${order.id.slice(-8).toUpperCase()} has been cancelled successfully.` });
+      } else {
+        const data = await res.json();
+        toast({ title: 'Error', description: data.error || 'Failed to cancel order', variant: 'destructive' });
+      }
+    } catch {
+      toast({ title: 'Error', description: 'Something went wrong. Please try again.', variant: 'destructive' });
+    } finally {
+      setCancelling(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -228,6 +260,52 @@ export default function OrderDetailPage() {
               )}
             </CardContent>
           </Card>
+
+          {/* Cancel Order Button */}
+          {order.status === 'PENDING' || order.status === 'PROCESSING' ? (
+            <Card className="border-red-100">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">Want to cancel this order?</p>
+                    <p className="text-xs text-gray-500">Once cancelled, this action cannot be undone.</p>
+                  </div>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        variant="destructive"
+                        disabled={cancelling}
+                        className="gap-2"
+                      >
+                        {cancelling ? (
+                          <><Loader2 className="h-4 w-4 animate-spin" /> Cancelling...</>
+                        ) : (
+                          <><XCircle className="h-4 w-4" /> Cancel Order</>
+                        )}
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Cancel Order</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Are you sure you want to cancel order #{order.id.slice(-8).toUpperCase()}? This action cannot be undone and the order will be marked as cancelled.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Keep Order</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={handleCancelOrder}
+                          className="bg-red-600 hover:bg-red-700"
+                        >
+                          Yes, Cancel Order
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
+              </CardContent>
+            </Card>
+          ) : null}
 
           {/* Back Button */}
           <Button
