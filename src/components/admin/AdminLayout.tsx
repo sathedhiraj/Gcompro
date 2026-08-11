@@ -3,6 +3,9 @@
 import { useState } from 'react';
 import { useUIStore } from '@/store/ui-store';
 import { useAuthStore } from '@/store/auth-store';
+import { useCartStore } from '@/store/cart-store';
+import { useWishlistStore } from '@/store/wishlist-store';
+import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -45,10 +48,25 @@ const navItems = [
 function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
   const { currentPage, navigate } = useUIStore();
   const { user, logout } = useAuthStore();
+  const { clearCart } = useCartStore();
+  const { clearWishlist } = useWishlistStore();
+  const { toast } = useToast();
 
   const handleNavigate = (page: Parameters<typeof navigate>[0]) => {
     navigate(page);
     onNavigate?.();
+  };
+
+  const handleLogout = () => {
+    logout();
+    clearCart();
+    clearWishlist();
+    navigate('home');
+    onNavigate?.();
+    toast({
+      title: 'Logged out',
+      description: 'You have been signed out successfully.',
+    });
   };
 
   return (
@@ -119,7 +137,7 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
           variant="ghost"
           size="sm"
           className="w-full justify-start text-gray-400 hover:text-red-400 hover:bg-gray-800 mt-1"
-          onClick={logout}
+          onClick={handleLogout}
         >
           <LogOut className="mr-2 h-4 w-4" />
           Logout

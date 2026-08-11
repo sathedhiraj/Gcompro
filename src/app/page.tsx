@@ -31,7 +31,7 @@ function CustomerLayout({ children }: { children: React.ReactNode }) {
 }
 
 export default function Home() {
-  const { currentPage } = useUIStore();
+  const { currentPage, navigate } = useUIStore();
   const { user, checkAuth } = useAuthStore();
   const { fetchCart } = useCartStore();
   const { fetchWishlist } = useWishlistStore();
@@ -52,8 +52,24 @@ export default function Home() {
   // Check if current page is an admin page
   const isAdminPage = currentPage.startsWith('admin-');
 
-  // Render admin layout for admin pages
+  // Guard: only logged-in ADMIN users can view admin pages.
+  // If a non-admin (or logged-out user) lands on an admin page, bounce them
+  // to the login page. This also makes the admin panel disappear instantly
+  // after logout, even before the route guard in AdminLayout fires.
+  useEffect(() => {
+    if (isAdminPage) {
+      if (!user || user.role !== 'ADMIN') {
+        navigate('login');
+      }
+    }
+  }, [isAdminPage, user, navigate]);
+
+  // While auth is still loading, or if a non-admin is on an admin page,
+  // don't render the admin layout (prevents flash of admin content).
   if (isAdminPage) {
+    if (!user || user.role !== 'ADMIN') {
+      return null;
+    }
     return <AdminLayout />;
   }
 

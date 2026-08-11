@@ -55,3 +55,31 @@ Stage Summary:
 - deploy-fix.sh created at project root for the user to run on EC2 with: sudo bash deploy-fix.sh
 - Local dev server verified unaffected (200 responses, cart reads working)
 - No application code changes were needed - only ops/deployment fixes
+
+---
+Task ID: 3
+Agent: Main Agent
+Task: Fix Admin Logout not working (admin could log in but Logout button did nothing)
+
+Work Log:
+- Investigated src/store/auth-store.ts: logout() only clears localStorage + zustand auth state, does NOT navigate
+- Investigated src/components/admin/AdminLayout.tsx: found the bug — Logout button called `logout` directly (onClick={logout}) with NO navigation
+- Compared with src/components/layout/Header.tsx which has a correct handleLogout: logout() + navigate('home')
+- Root cause: after logout(), currentPage in ui-store stayed as 'admin-dashboard', so page.tsx kept rendering <AdminLayout /> because currentPage.startsWith('admin-') was still true → admin appeared "stuck" on admin page
+- Fixed AdminLayout.tsx: added handleLogout() that calls logout(), clearCart(), clearWishlist(), navigate('home'), and shows a success toast
+- Added admin route guard in src/app/page.tsx: if user is not logged in OR role !== 'ADMIN' on an admin page, redirect to login and render null (prevents flash of admin content + secures admin pages)
+- Confirmed clearCart() and clearWishlist() methods already exist in cart-store.ts and wishlist-store.ts
+- Ran lint: 0 errors, 0 warnings (clean)
+- Browser-verified end-to-end with Agent Browser:
+  * Logged in as admin@g-ecom.com / admin123 -> success (saw "AU Admin" in header)
+  * Navigated to Admin Dashboard via user dropdown
+  * Clicked Logout button -> redirected to customer home page
+  * Confirmed localStorage userId and user both null after logout
+  * VLM confirmed screenshot shows customer home page with Login/Register buttons (logged out)
+- Tested route guard: fake userId in localStorage correctly rejected on reload
+
+Stage Summary:
+- Admin Logout now works: clears auth/cart/wishlist state, navigates to home, shows toast
+- Admin pages are now guarded: only logged-in ADMIN users can view them (redirects non-admins to login)
+- Root cause was missing navigate('home') call in AdminLayout's logout handler
+- Lint clean, dev server healthy, browser-verified
