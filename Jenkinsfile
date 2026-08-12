@@ -43,7 +43,7 @@ pipeline {
                 git pull origin main
                 npm install
                 npm run build
-                pkill -f "next start" || true
+                pkill -f ".next/standalone/server.js" || true
                 nohup npm start > app.log 2>&1 &
                 exit
 EOF
