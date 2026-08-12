@@ -39,7 +39,7 @@ pipeline {
             steps {
                 sh '''
                 ssh -o StrictHostKeyChecking=no ubuntu@172.31.3.166 << 'EOF'
-                cd /var/www/Gcompro
+                cd /var/www/gcompro
                 git pull origin main
                 npm install
                 npm run build
