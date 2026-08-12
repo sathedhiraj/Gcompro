@@ -45,7 +45,7 @@ pipeline {
         stage('Deploy to Frontend') {
             steps {
                 sh '''
-                ssh -o StrictHostKeyChecking=no ubuntu@13.203.203.48 << 'EOF'
+                ssh -o StrictHostKeyChecking=no ubuntu@172.31.3.166 << 'EOF'
                 cd /var/www/Gcompro
                 git pull origin main
                 npm install
