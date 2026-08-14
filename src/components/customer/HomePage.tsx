@@ -283,7 +283,7 @@ export default function HomePage() {
       {/* Categories Section */}
       <section className="bg-white py-6">
         <div className="mx-auto max-w-7xl px-4">
-          <h2 className="mb-4 text-xl font-bold text-gray-900">Shop by Category pritam patil</h2>
+          <h2 className="mb-4 text-xl font-bold text-gray-900">Shop by Category Rakesh patil</h2>
           {loading ? (
             <div className="flex gap-4 overflow-x-auto pb-2">
               {Array.from({ length: 6 }).map((_, i) => (
