@@ -55,7 +55,7 @@ pipeline {
             steps {
                 withCredentials([
                     usernamePassword(
-                        credentialsId: 'dockerhub-creds45',
+                        credentialsId: 'docker-crediation',
                         usernameVariable: 'DOCKER_USERNAME',
                         passwordVariable: 'DOCKER_PASSWORD'
                     )
@@ -78,7 +78,7 @@ pipeline {
         stage('Deploy to Frontend') {
             steps {
                 sh '''
-                ssh -o StrictHostKeyChecking=no ubuntu@65.2.82.149 << 'EOF'
+                ssh -o StrictHostKeyChecking=no ubuntu@172.31.5.235 << 'EOF'
 
                 cd /var/www/gcompro
 
