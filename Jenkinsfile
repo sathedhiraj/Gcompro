@@ -78,7 +78,7 @@ pipeline {
         stage('Deploy to Frontend') {
             steps {
                 sh '''
-                ssh -o StrictHostKeyChecking=no ubuntu@15.207.112.135 << 'EOF'
+                ssh -o StrictHostKeyChecking=no ubuntu@172.31.5.235 << 'EOF'
 
                 cd /var/www/gcompro
 
