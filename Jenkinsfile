@@ -75,31 +75,31 @@ pipeline {
             }
         }
 
-        stage('Deploy to Frontend') {
-            steps {
-                sh '''
-                ssh -o StrictHostKeyChecking=no ubuntu@172.31.5.235 << 'EOF'
+stage('Deploy to Frontend') {
+    steps {
+        sshagent(['frontend-ec2-ssh']) {
+            sh '''
+                ssh -o StrictHostKeyChecking=no ubuntu@172.31.5.235 << EOF
 
-                cd /var/www/gcompro
+                docker pull ${DOCKER_IMAGE}:${BUILD_NUMBER}
 
-                git pull origin main
+                docker stop gcompro || true
+                docker rm gcompro || true
 
-                npm install
+                docker run -d \
+                    --name gcompro \
+                    -p 3000:3000 \
+                    ${DOCKER_IMAGE}:${BUILD_NUMBER}
 
-                npm run build
+                docker ps
 
-                pkill -f ".next/standalone/server.js" || true
-
-                nohup npm start > app.log 2>&1 &
-
-                exit
-EOF
-                '''
-            }
+                EOF
+            '''
         }
-
     }
+}
 
+    
     post {
 
         success {
