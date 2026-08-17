@@ -78,24 +78,22 @@ pipeline {
 stage('Deploy to Frontend') {
     steps {
         sshagent(['frontend-ec2-ssh']) {
-            sh '''
-                ssh -o StrictHostKeyChecking=no ubuntu@15.207.98.120 <<EOF
+            sh """
+                ssh -o StrictHostKeyChecking=no ubuntu@15.207.98.120 '
+                    docker pull ${DOCKER_IMAGE}:${BUILD_NUMBER}
 
-                docker pull ${DOCKER_IMAGE}:${BUILD_NUMBER}
+                    docker stop gcompro || true
+                    docker rm gcompro || true
 
-                docker stop gcompro || true
-                docker rm gcompro || true
+                    docker run -d \
+                        --name gcompro \
+                        --env-file /home/ubuntu/gcompro.env \
+                        -p 3000:3000 \
+                        ${DOCKER_IMAGE}:${BUILD_NUMBER}
 
-                docker run -d \
-                    --name gcompro \
-                    --env-file /home/ubuntu/gcompro.env \
-                    -p 3000:3000 \
-                    ${DOCKER_IMAGE}:${BUILD_NUMBER}
-
-                docker ps
-
-                EOF
-            '''
+                    docker ps
+                '
+            """
         }
     }
 }
