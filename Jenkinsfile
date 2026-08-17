@@ -88,6 +88,7 @@ stage('Deploy to Frontend') {
 
                 docker run -d \
                     --name gcompro \
+                    --env-file /home/ubuntu/gcompro.env \
                     -p 3000:3000 \
                     ${DOCKER_IMAGE}:${BUILD_NUMBER}
 
