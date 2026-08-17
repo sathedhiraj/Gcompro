@@ -99,6 +99,8 @@ stage('Deploy to Frontend') {
     }
 }
 
+    }
+
     
     post {
 
