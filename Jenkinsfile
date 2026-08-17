@@ -79,7 +79,7 @@ stage('Deploy to Frontend') {
     steps {
         sshagent(['frontend-ec2-ssh']) {
             sh '''
-                ssh -o StrictHostKeyChecking=no ubuntu@15.207.98.120 << EOF
+                ssh -o StrictHostKeyChecking=no ubuntu@15.207.98.120 '
 
                 docker pull ${DOCKER_IMAGE}:${BUILD_NUMBER}
 
