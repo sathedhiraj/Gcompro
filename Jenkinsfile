@@ -77,7 +77,7 @@ pipeline {
 
 stage('Deploy to Frontend') {
     steps {
-        sshagent(['frontend-ec2-ssh']) {
+        sshagent(['docker-credential']) {
             sh '''
                 ssh -o StrictHostKeyChecking=no ubuntu@15.207.98.120 << EOF
 
