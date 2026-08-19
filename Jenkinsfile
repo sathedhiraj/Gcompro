@@ -79,7 +79,7 @@ stage('Deploy to Frontend') {
     steps {
         sshagent(['frontend-ec2-ssh']) {
             sh """
-                ssh -o StrictHostKeyChecking=no ubuntu@3.110.176.81 '
+                ssh -o StrictHostKeyChecking=no ubuntu@3.111.38.155 '
                     docker pull ${DOCKER_IMAGE}:${BUILD_NUMBER}
 
                     docker stop gcompro || true
